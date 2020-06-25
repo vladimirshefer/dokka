@@ -134,6 +134,7 @@ private class DokkaDescriptorVisitor(
         val driWithPlatform = parent.dri.withClass(descriptor.name.asString()).withEmptyInfo()
         val scope = descriptor.unsubstitutedMemberScope
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
         val info = descriptor.resolveClassDescriptionData()
 
         return DInterface(
@@ -150,11 +151,11 @@ private class DokkaDescriptorVisitor(
             generics = descriptor.declaredTypeParameters.map { it.toTypeParameter() },
             companion = descriptor.companion(driWithPlatform),
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DInterface>(
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations(),
                 ImplementedInterfaces(info.allImplementedInterfaces.toSourceSetDependent())
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
@@ -162,6 +163,7 @@ private class DokkaDescriptorVisitor(
         val driWithPlatform = parent.dri.withClass(descriptor.name.asString()).withEmptyInfo()
         val scope = descriptor.unsubstitutedMemberScope
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
         val info = descriptor.resolveClassDescriptionData()
 
 
@@ -177,11 +179,11 @@ private class DokkaDescriptorVisitor(
             supertypes = info.supertypes.toSourceSetDependent(),
             documentation = info.docs,
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DObject>(
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations(),
                 ImplementedInterfaces(info.allImplementedInterfaces.toSourceSetDependent())
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
@@ -189,6 +191,7 @@ private class DokkaDescriptorVisitor(
         val driWithPlatform = parent.dri.withClass(descriptor.name.asString()).withEmptyInfo()
         val scope = descriptor.unsubstitutedMemberScope
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
         val info = descriptor.resolveClassDescriptionData()
 
         return DEnum(
@@ -206,11 +209,11 @@ private class DokkaDescriptorVisitor(
             documentation = info.docs,
             companion = descriptor.companion(driWithPlatform),
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DEnum>(
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations(),
                 ImplementedInterfaces(info.allImplementedInterfaces.toSourceSetDependent())
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
@@ -239,6 +242,8 @@ private class DokkaDescriptorVisitor(
     fun annotationDescriptor(descriptor: ClassDescriptor, parent: DRIWithPlatformInfo): DAnnotation {
         val driWithPlatform = parent.dri.withClass(descriptor.name.asString()).withEmptyInfo()
         val scope = descriptor.unsubstitutedMemberScope
+        val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
 
         return DAnnotation(
             dri = driWithPlatform.dri,
@@ -247,12 +252,12 @@ private class DokkaDescriptorVisitor(
             classlikes = scope.classlikes(driWithPlatform),
             functions = scope.functions(driWithPlatform),
             properties = scope.properties(driWithPlatform),
-            expectPresentInSet = null,
+            expectPresentInSet = sourceSet.takeIf { isExpect },
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DAnnotation>(
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations()
-            ),
+            ).let { if (isExpect || isActual) it + IsExpectActual else it },
             companion = descriptor.companionObjectDescriptor?.let { objectDescriptor(it, driWithPlatform) },
             visibility = descriptor.visibility.toDokkaVisibility().toSourceSetDependent(),
             generics = descriptor.declaredTypeParameters.map { it.toTypeParameter() },
@@ -265,6 +270,7 @@ private class DokkaDescriptorVisitor(
         val driWithPlatform = parent.dri.withClass(descriptor.name.asString()).withEmptyInfo()
         val scope = descriptor.unsubstitutedMemberScope
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
         val info = descriptor.resolveClassDescriptionData()
         val actual = descriptor.createSources()
 
@@ -290,17 +296,18 @@ private class DokkaDescriptorVisitor(
             modifier = descriptor.modifier().toSourceSetDependent(),
             companion = descriptor.companion(driWithPlatform),
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DClass>(
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations(),
                 ImplementedInterfaces(info.allImplementedInterfaces.toSourceSetDependent())
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
     override fun visitPropertyDescriptor(descriptor: PropertyDescriptor, parent: DRIWithPlatformInfo): DProperty {
         val dri = parent.dri.copy(callable = Callable.from(descriptor))
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
 
         val actual = descriptor.createSources()
         return DProperty(
@@ -323,11 +330,11 @@ private class DokkaDescriptorVisitor(
             expectPresentInSet = sourceSet.takeIf { isExpect },
             sourceSets = setOf(sourceSet),
             generics = descriptor.typeParameters.map { it.toTypeParameter() },
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DProperty>(
                 (descriptor.additionalExtras() + descriptor.getAnnotationsWithBackingField()
                     .toAdditionalExtras()).toSet().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotationsWithBackingField().toSourceSetDependent().toAnnotations()
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
@@ -340,6 +347,7 @@ private class DokkaDescriptorVisitor(
     override fun visitFunctionDescriptor(descriptor: FunctionDescriptor, parent: DRIWithPlatformInfo): DFunction {
         val (dri, inheritedFrom) = descriptor.createDRI()
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
 
         val actual = descriptor.createSources()
         return DFunction(
@@ -360,11 +368,11 @@ private class DokkaDescriptorVisitor(
             modifier = descriptor.modifier().toSourceSetDependent(),
             type = descriptor.returnType!!.toBound(),
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DFunction>(
                 InheritedFunction(inheritedFrom.toSourceSetDependent()),
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations()
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
@@ -372,10 +380,12 @@ private class DokkaDescriptorVisitor(
         val dri = parent.dri.copy(callable = Callable.from(descriptor))
         val actual = descriptor.createSources()
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
+        val className = descriptor.constructedClass.name.toString()
 
         return DFunction(
             dri = dri,
-            name = "<init>",
+            name = className,
             isConstructor = true,
             receiver = descriptor.extensionReceiverParameter?.let {
                 visitReceiverParameterDescriptor(it, DRIWithPlatformInfo(dri, actual))
@@ -410,7 +420,7 @@ private class DokkaDescriptorVisitor(
                 if (descriptor.isPrimary) {
                     it + PrimaryConstructorExtra
                 } else it
-            }
+            }.let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 
@@ -435,6 +445,7 @@ private class DokkaDescriptorVisitor(
         val dri = parent.copy(callable = Callable.from(descriptor))
         val isGetter = descriptor is PropertyGetterDescriptor
         val isExpect = descriptor.isExpect
+        val isActual = descriptor.isActual
 
         fun PropertyDescriptor.asParameter(parent: DRI) =
             DParameter(
@@ -482,10 +493,10 @@ private class DokkaDescriptorVisitor(
             },
             sources = descriptor.createSources(),
             sourceSets = setOf(sourceSet),
-            extra = PropertyContainer.withAll(
+            extra = PropertyContainer.withAll<DFunction>(
                 descriptor.additionalExtras().toSourceSetDependent().toAdditionalModifiers(),
                 descriptor.getAnnotations().toSourceSetDependent().toAnnotations()
-            )
+            ).let { if (isExpect || isActual) it + IsExpectActual else it }
         )
     }
 

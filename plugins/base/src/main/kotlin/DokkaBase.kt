@@ -57,7 +57,7 @@ class DokkaBase : DokkaPlugin() {
     }
 
     val documentableMerger by extending {
-        CoreExtensions.documentableMerger with DefaultDocumentableMerger
+        CoreExtensions.documentableMerger providing ::DefaultDocumentableMerger
     }
 
     val deprecatedDocumentableFilter by extending {
