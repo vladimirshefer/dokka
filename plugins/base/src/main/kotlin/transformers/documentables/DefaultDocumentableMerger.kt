@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 internal class DefaultDocumentableMerger(context: DokkaContext) : DocumentableMerger {
     private val dependencyInfo = context.getDependencyInfo()
 
-    override fun invoke(modules: Collection<DModule>, context: DokkaContext): DModule {
+    override fun invoke(modules: Collection<DModule>): DModule {
         val projectName =
             modules.fold(modules.first().name) { acc, module -> acc.commonPrefixWith(module.name) }
                 .takeIf { it.isNotEmpty() }

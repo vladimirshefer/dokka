@@ -188,7 +188,7 @@ abstract class AbstractCoreTest {
     protected class DokkaSourceSetBuilder(
         var moduleName: String = "root",
         var moduleDisplayName: String? = null,
-        var name: String = "main",
+        var sourceSetName: String = "main",
         var displayName: String = "JVM",
         var classpath: List<String> = emptyList(),
         var sourceRoots: List<String> = emptyList(),
@@ -214,7 +214,7 @@ abstract class AbstractCoreTest {
         fun build() = DokkaSourceSetImpl(
             moduleDisplayName = moduleDisplayName ?: moduleName,
             displayName = displayName,
-            sourceSetID = DokkaSourceSetID(moduleName, name),
+            sourceSetID = DokkaSourceSetID(moduleName, sourceSetName),
             classpath = classpath,
             sourceRoots = sourceRoots.map { SourceRootImpl(it) },
             dependentSourceSets = dependentSourceSets,

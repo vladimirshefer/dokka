@@ -487,7 +487,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 val commonMain = sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.common.toString()
-                    name = "commonMain"
+                    sourceSetName = "commonMain"
                     displayName = "commonMain"
                     sourceRoots = listOf("src/commonMain/kotlin")
                 }
@@ -495,7 +495,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.jvm.toString()
-                    name = "jvmMain"
+                    sourceSetName = "jvmMain"
                     displayName = "jvmMain"
                     sourceRoots = listOf("src/jvmMain/kotlin")
                     dependentSourceSets = setOf(commonMain.sourceSetID)
@@ -530,7 +530,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 val commonMain = sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.common.toString()
-                    name = "commonMain"
+                    sourceSetName = "commonMain"
                     displayName = "commonMain"
                     sourceRoots = listOf("src/commonMain/kotlin")
                 }
@@ -538,7 +538,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.jvm.toString()
-                    name = "jvmMain"
+                    sourceSetName = "jvmMain"
                     displayName = "jvmMain"
                     sourceRoots = listOf("src/jvmMain/kotlin")
                     dependentSourceSets = setOf(commonMain.sourceSetID)
@@ -572,7 +572,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 val commonMain = sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.common.toString()
-                    name = "commonMain"
+                    sourceSetName = "commonMain"
                     displayName = "commonMain"
                     sourceRoots = listOf("src/commonMain/kotlin")
                 }
@@ -580,7 +580,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.jvm.toString()
-                    name = "jvmMain"
+                    sourceSetName = "jvmMain"
                     displayName = "jvmMain"
                     sourceRoots = listOf("src/jvmMain/kotlin")
                     dependentSourceSets = setOf(commonMain.sourceSetID)
@@ -589,7 +589,7 @@ class ReportUndocumentedTransformerTest : AbstractCoreTest() {
                 sourceSet {
                     reportUndocumented = true
                     analysisPlatform = Platform.native.toString()
-                    name = "macosMain"
+                    sourceSetName = "macosMain"
                     displayName = "macosMain"
                     sourceRoots = listOf("src/macosMain/kotlin")
                     dependentSourceSets = setOf(commonMain.sourceSetID)
