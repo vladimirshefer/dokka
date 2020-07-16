@@ -482,12 +482,10 @@ open class DefaultPageCreator(
                     .groupBy { it.name } // This groupBy should probably use LocationProvider
                     // This hacks displaying actual typealias signatures along classlike ones
                     .mapValues { if (it.value.any { it is DClasslike }) it.value.filter { it !is DTypeAlias } else it.value }
-                    .map { (groupKey, elements) ->
-                        Pair(
-                            groupKey,
+                    .mapValues { (groupKey, elements) ->
                             buildGroup(
-                                elements.map { it.dri }.toSet(),
-                                elements.flatMap { it.sourceSets }.toSet(),
+                                dri = elements.map { it.dri }.toSet(),
+                                sourceSets = elements.flatMap { it.sourceSets }.toSet(),
                                 kind = kind,
                                 styles = emptySet()
                             ) {
@@ -511,8 +509,8 @@ open class DefaultPageCreator(
                                         }
                                     }
                                 }
-                            })
-                    }
+                            }
+                    }.toList()
                     .sortedWith(compareBy(nullsLast(String.CASE_INSENSITIVE_ORDER)){it.first})
                     .map { it.second }
             }

@@ -1,16 +1,12 @@
 package org.jetbrains.dokka.base.resolvers.local
 
-import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.DokkaConfiguration.DokkaSourceSet
+import org.jetbrains.dokka.base.renderers.sourceSets
 import org.jetbrains.dokka.base.resolvers.anchors.SymbolAnchorHint
-import org.jetbrains.dokka.base.resolvers.external.ExternalLocationProvider
 import org.jetbrains.dokka.links.DRI
 import org.jetbrains.dokka.model.withDescendants
 import org.jetbrains.dokka.pages.*
 import org.jetbrains.dokka.plugability.DokkaContext
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.URLConnection
 import java.util.*
 
 private const val PAGE_WITH_CHILDREN_SUFFIX = "index"
@@ -21,21 +17,31 @@ open class DefaultLocationProvider(
 ) : BaseLocationProvider(dokkaContext) {
     protected open val extension = ".html"
 
-    protected val pagesIndex: Map<DRI, ContentPage> = pageGraphRoot.withDescendants().filterIsInstance<ContentPage>()
-        .map { it.dri.map { dri -> dri to it } }.flatten()
-        .groupingBy { it.first }
-        .aggregate { dri, _, (_, page), first ->
-            if (first) page else throw AssertionError("Multiple pages associated with dri: $dri")
-        }
+    protected val pagesIndex: Map<Pair<DRI, DokkaSourceSet>, ContentPage> =
+        pageGraphRoot.withDescendants().filterIsInstance<ContentPage>()
+            .flatMap { page ->
+                page.dri.flatMap { dri ->
+                    page.sourceSets().map { sourceSet -> (dri to sourceSet) to page }
+                }
+            }
+            .groupingBy { it.first }
+            .aggregate { key, _, (_, page), first ->
+                if (first) page else throw AssertionError("Multiple pages associated with key: ${key.first}/${key.second}")
+            }
 
-    protected val anchorsIndex = pageGraphRoot.withDescendants().filterIsInstance<ContentPage>()
-        .flatMap { page ->
-            page.content.withDescendants()
-                .filter { it.extra[SymbolAnchorHint] != null }
-                .mapNotNull { it.dci.dri.singleOrNull() }
-                .distinct()
-                .map { it to page }
-        }.toMap()
+    protected val anchorsIndex: Map<Pair<DRI, DokkaSourceSet>, ContentPage> =
+        pageGraphRoot.withDescendants().filterIsInstance<ContentPage>()
+            .flatMap { page ->
+                page.content.withDescendants()
+                    .filter { it.extra[SymbolAnchorHint] != null }
+                    .mapNotNull { it.dci.dri.singleOrNull() }
+                    .distinct()
+                    .flatMap { dri ->
+                        page.sourceSets().map { sourceSet ->
+                            (dri to sourceSet) to page
+                        }
+                    }
+            }.toMap()
 
 
     protected val pathsIndex: Map<PageNode, List<String>> = IdentityHashMap<PageNode, List<String>>().apply {
@@ -52,10 +58,11 @@ open class DefaultLocationProvider(
         pathTo(node, context) + if (!skipExtension) extension else ""
 
     override fun resolve(dri: DRI, sourceSets: Set<DokkaSourceSet>, context: PageNode?): String =
-        pagesIndex[dri]?.let { resolve(it, context) }
-            ?: anchorsIndex[dri]?.let { resolve(it, context) + "#$dri" }
-        // Not found in PageGraph, that means it's an external link
-            ?: getExternalLocation(dri, sourceSets)
+        sourceSets.map { Pair(dri, it) }.let {
+            it.map { pagesIndex[it]?.let { resolve(it, context) } }.distinct().singleOrNull()
+                ?: it.map { anchorsIndex[it]?.let { resolve(it, context) + "#$dri" } }.distinct().singleOrNull()
+                ?: getExternalLocation(dri, sourceSets)
+        }
 
     override fun resolveRoot(node: PageNode): String =
         pathTo(pageGraphRoot, node).removeSuffix(PAGE_WITH_CHILDREN_SUFFIX)
@@ -77,130 +84,16 @@ open class DefaultLocationProvider(
             .takeWhile { (a, b) -> a == b }.count()
 
         return (List(contextPath.size - commonPathElements) { ".." } + nodePath.drop(commonPathElements) +
-                    if (node is ClasslikePageNode || node.children.isNotEmpty())
-                        listOf(PAGE_WITH_CHILDREN_SUFFIX)
-                    else
-                        emptyList()
+                if (node is ClasslikePageNode || node.children.isNotEmpty())
+                    listOf(PAGE_WITH_CHILDREN_SUFFIX)
+                else
+                    emptyList()
                 ).joinToString("/")
     }
 
     private fun PageNode.parent() = pageGraphRoot.parentMap[this]
-
-    private val cache: MutableMap<URL, LocationInfo> = mutableMapOf()
-
-    private fun getLocation(
-        dri: DRI,
-        jdkToExternalDocumentationLinks: Map<Int, List<DokkaConfiguration.ExternalDocumentationLink>>
-    ): String {
-        val toResolve: MutableMap<Int, MutableList<DokkaConfiguration.ExternalDocumentationLink>> = mutableMapOf()
-        for ((jdk, links) in jdkToExternalDocumentationLinks) {
-            for (link in links) {
-                val info = cache[link.packageListUrl]
-                if (info == null) {
-                    toResolve.getOrPut(jdk) { mutableListOf() }.add(link)
-                } else if (info.packages.contains(dri.packageName)) {
-                    return link.url.toExternalForm() + getLink(dri, info)
-                }
-            }
-        }
-        // Not in cache, resolve packageLists
-        for ((jdk, links) in toResolve) {
-            for (link in links) {
-                if(dokkaContext.configuration.offlineMode && link.packageListUrl.protocol.toLowerCase() != "file")
-                    continue
-                val locationInfo =
-                    loadPackageList(jdk, link.packageListUrl)
-                if (locationInfo.packages.contains(dri.packageName)) {
-                    return link.url.toExternalForm() + getLink(dri, locationInfo)
-                }
-            }
-            toResolve.remove(jdk)
-        }
-        return ""
-    }
-
-    private fun getLink(dri: DRI, locationInfo: LocationInfo): String =
-        locationInfo.locations[dri.packageName + "." + dri.classNames]
-            ?: // Not sure if it can be here, previously it shadowed only kotlin/dokka related sources, here it shadows both dokka/javadoc, cause I cannot distinguish what LocationProvider has been hypothetically chosen
-            if (locationInfo.externalLocationProvider != null)
-                with(locationInfo.externalLocationProvider) {
-                    dri.toLocation()
-                }
-            else
-                throw IllegalStateException("Have not found any convenient ExternalLocationProvider for $dri DRI!")
-
-    private fun loadPackageList(jdk: Int, url: URL): LocationInfo {
-        val packageListStream = url.doOpenConnectionToReadContent().getInputStream()
-        val (params, packages) =
-            packageListStream
-                .bufferedReader()
-                .useLines { lines -> lines.partition { it.startsWith(DOKKA_PARAM_PREFIX) } }
-
-        val paramsMap = params.asSequence()
-            .map { it.removePrefix(DOKKA_PARAM_PREFIX).split(":", limit = 2) }
-            .groupBy({ (key, _) -> key }, { (_, value) -> value })
-
-        val format = paramsMap["format"]?.singleOrNull() ?: when {
-            jdk < 8 -> "javadoc1" // Covers JDK 1 - 7
-            jdk < 10 -> "javadoc8" // Covers JDK 8 - 9
-            else -> "javadoc10" // Covers JDK 10+
-        }
-
-        val locations = paramsMap["location"].orEmpty()
-            .map { it.split("\u001f", limit = 2) }
-            .map { (key, value) -> key to value }
-            .toMap()
-
-        val externalLocationProvider =
-            externalLocationProviderFactories.asSequence().map { it.getExternalLocationProvider(format) }
-                .filterNotNull().take(1).firstOrNull()
-
-        val info = LocationInfo(
-            externalLocationProvider,
-            packages.toSet(),
-            locations
-        )
-        cache[url] = info
-        return info
-    }
-
-    private fun URL.doOpenConnectionToReadContent(timeout: Int = 10000, redirectsAllowed: Int = 16): URLConnection {
-        val connection = this.openConnection().apply {
-            connectTimeout = timeout
-            readTimeout = timeout
-        }
-
-        when (connection) {
-            is HttpURLConnection -> {
-                return when (connection.responseCode) {
-                    in 200..299 -> {
-                        connection
-                    }
-                    HttpURLConnection.HTTP_MOVED_PERM,
-                    HttpURLConnection.HTTP_MOVED_TEMP,
-                    HttpURLConnection.HTTP_SEE_OTHER -> {
-                        if (redirectsAllowed > 0) {
-                            val newUrl = connection.getHeaderField("Location")
-                            URL(newUrl).doOpenConnectionToReadContent(timeout, redirectsAllowed - 1)
-                        } else {
-                            throw RuntimeException("Too many redirects")
-                        }
-                    }
-                    else -> {
-                        throw RuntimeException("Unhandled http code: ${connection.responseCode}")
-                    }
-                }
-            }
-            else -> return connection
-        }
-    }
-
-    data class LocationInfo(
-        val externalLocationProvider: ExternalLocationProvider?,
-        val packages: Set<String>,
-        val locations: Map<String, String>
-    )
 }
+
 
 private val reservedFilenames = setOf("index", "con", "aux", "lst", "prn", "nul", "eof", "inp", "out")
 

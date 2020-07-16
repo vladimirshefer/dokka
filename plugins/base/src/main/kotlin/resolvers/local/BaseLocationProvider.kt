@@ -3,6 +3,7 @@ package org.jetbrains.dokka.base.resolvers.local
 import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.DokkaConfiguration.DokkaSourceSet
 import org.jetbrains.dokka.base.DokkaBase
+import org.jetbrains.dokka.base.resolvers.external.ExternalLocationProvider
 import org.jetbrains.dokka.links.DRI
 import org.jetbrains.dokka.plugability.DokkaContext
 import org.jetbrains.dokka.plugability.plugin
@@ -18,7 +19,7 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
 
     protected val externalLocationProviderFactories =
         dokkaContext.plugin<DokkaBase>().query { externalLocationProviderFactory }
-    private val cache: MutableMap<URL, DefaultLocationProvider.LocationInfo> = mutableMapOf()
+    private val cache: MutableMap<URL, LocationInfo> = mutableMapOf()
     private val lock = ReentrantReadWriteLock()
 
     protected fun getExternalLocation(
@@ -59,7 +60,7 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
         return ""
     }
 
-    private fun getLink(dri: DRI, locationInfo: DefaultLocationProvider.LocationInfo): String =
+    private fun getLink(dri: DRI, locationInfo: LocationInfo): String =
         locationInfo.locations[dri.packageName + "." + dri.classNames]
             ?: // Not sure if it can be here, previously it shadowed only kotlin/dokka related sources, here it shadows both dokka/javadoc, cause I cannot distinguish what LocationProvider has been hypothetically chosen
             if (locationInfo.externalLocationProvider != null)
@@ -69,7 +70,7 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
             else
                 throw IllegalStateException("Have not found any convenient ExternalLocationProvider for $dri DRI!")
 
-    private fun loadPackageList(jdk: Int, url: URL): DefaultLocationProvider.LocationInfo = lock.write {
+    private fun loadPackageList(jdk: Int, url: URL): LocationInfo = lock.write {
         val packageListStream = url.doOpenConnectionToReadContent().getInputStream()
         val (params, packages) =
             packageListStream
@@ -95,7 +96,7 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
             externalLocationProviderFactories.asSequence().map { it.getExternalLocationProvider(format) }
                 .filterNotNull().take(1).firstOrNull()
 
-        val info = DefaultLocationProvider.LocationInfo(
+        val info = LocationInfo(
             externalLocationProvider,
             packages.toSet(),
             locations
@@ -139,4 +140,9 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
         const val DOKKA_PARAM_PREFIX = "\$dokka."
     }
 
+    data class LocationInfo(
+        val externalLocationProvider: ExternalLocationProvider?,
+        val packages: Set<String>,
+        val locations: Map<String, String>
+    )
 }
