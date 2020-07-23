@@ -16,10 +16,9 @@ internal class JavadocContentToHtmlTranslator(
         when (node) {
             is ContentGroup -> htmlForContentNodes(node.children, node.style, relative)
             is ContentText -> buildText(node)
-            is ContentDRILink -> buildLink(
-                locationProvider.resolve(node.address, node.sourceSets, relative),
-                htmlForContentNodes(node.children, node.style, relative)
-            )
+            is ContentDRILink -> locationProvider.resolve(node.address, node.sourceSets, relative)?.let { linkAddress ->
+                buildLink(linkAddress, htmlForContentNodes(node.children, node.style, relative))
+            } ?: htmlForContentNodes(node.children, node.style, relative)
             is ContentResolvedLink -> buildLink(node.address, htmlForContentNodes(node.children, node.style, relative))
             is ContentCode -> htmlForCode(node.children)
             is JavadocSignatureContentNode -> htmlForSignature(node, relative)

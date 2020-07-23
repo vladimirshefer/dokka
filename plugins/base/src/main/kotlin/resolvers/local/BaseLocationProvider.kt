@@ -24,7 +24,7 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
     protected fun getExternalLocation(
         dri: DRI,
         sourceSets: Set<DokkaSourceSet>
-    ): String {
+    ): String? {
         val jdkToExternalDocumentationLinks = dokkaContext.configuration.sourceSets
             .filter { sourceSet ->
                 sourceSets.contains(sourceSet)
@@ -56,7 +56,7 @@ abstract class BaseLocationProvider(protected val dokkaContext: DokkaContext) : 
             }
             toResolve.remove(jdk)
         }
-        return ""
+        return null
     }
 
     private fun getLink(dri: DRI, locationInfo: DefaultLocationProvider.LocationInfo): String =

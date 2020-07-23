@@ -514,7 +514,7 @@ open class HtmlRenderer(
         }
 
     private fun FlowContent.buildLink(to: PageNode, from: PageNode) =
-        buildLink(locationProvider.resolve(to, from)) {
+        buildLink(locationProvider.resolve(to, from)!!) {
             text(to.name)
         }
 
@@ -542,7 +542,7 @@ open class HtmlRenderer(
         platforms: List<DokkaSourceSet>,
         from: PageNode? = null,
         block: FlowContent.() -> Unit
-    ) = buildLink(locationProvider.resolve(to, platforms.toSet(), from), block)
+    ) = buildLink(locationProvider.resolve(to, platforms.toSet(), from).orEmpty(), block)
 
     override fun buildError(node: ContentNode) {
         context.logger.error("Unknown ContentNode type: $node")
@@ -606,12 +606,11 @@ open class HtmlRenderer(
                     documentable.dri.packageName,
                     documentable.dri.classNames,
                     documentable.dri.callable?.name
-                )
-                    .filter { !it.isNullOrEmpty() }
+                ).filter { !it.isNullOrEmpty() }
                     .takeIf { it.isNotEmpty() }
                     ?.joinToString(".")
                     ?.let {
-                        pageList.put(it, Pair(textNodes ?: page.name, locationProvider.resolve(page)))
+                        pageList.put(it, Pair(textNodes ?: page.name, locationProvider.resolve(page)!!))
                     }
 
             }
@@ -729,7 +728,7 @@ open class HtmlRenderer(
                             span { text("© 2020 Copyright") }
                             span("pull-right") {
                                 span { text("Sponsored and developed by dokka") }
-                                a(href= "https://github.com/Kotlin/dokka") {
+                                a(href = "https://github.com/Kotlin/dokka") {
                                     span(classes = "padded-icon") {
                                         unsafe {
                                             raw(
