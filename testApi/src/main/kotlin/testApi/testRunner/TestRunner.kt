@@ -11,6 +11,7 @@ import org.jetbrains.dokka.utilities.DokkaConsoleLogger
 import org.junit.rules.TemporaryFolder
 import testApi.logger.TestLogger
 import java.io.File
+import java.net.URL
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -253,6 +254,11 @@ abstract class AbstractCoreTest {
             ?.replace("file:", "")
             ?.replaceAfter(".jar", "")
     }
+
+    protected val stdlibExternalDocumentationLink = ExternalDocumentationLinkImpl(
+        URL("https://kotlinlang.org/api/latest/jvm/stdlib/"),
+        URL("https://kotlinlang.org/api/latest/jvm/stdlib/package-list")
+    )
 
     companion object {
         private val filePathRegex = Regex("""[\n^](/\w+)+(\.\w+)?\s*\n""")
