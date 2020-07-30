@@ -1,5 +1,8 @@
 package org.jetbrains.dokka.base.renderers.html
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.jetbrains.dokka.links.DRI
@@ -38,10 +41,10 @@ class NavigationPage(val root: NavigationNode) : RendererSpecificPage {
         }
 }
 
-class NavigationNode(
+data class NavigationNode(
     val name: String,
-    val dri: DRI,
-    val sourceSets: Set<DokkaSourceSet>,
+    @get:JsonSerialize(using = ToStringSerializer::class) val dri: DRI,
+    @get:JsonIgnore val sourceSets: Set<DokkaSourceSet>,
     val children: List<NavigationNode>
 )
 
