@@ -28,7 +28,6 @@ open class JavadocPageCreator(
             name = m.name.ifEmpty { "root" },
             content = contentForModule(m),
             children = m.packages.map { pageForPackage(it) },
-            dri = setOf(m.dri)
         )
 
     fun pageForPackage(p: DPackage) =

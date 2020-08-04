@@ -24,18 +24,12 @@ interface WithJavadocExtra<T : Documentable> : WithExtraProperties<T> {
 }
 
 class JavadocModulePageNode(
-    override val name: String,
-    override val content: JavadocContentNode,
-    override val children: List<PageNode>,
-    override val dri: Set<DRI>
+    name: String,
+    content: JavadocContentNode,
+    children: List<PageNode>,
 ) :
     ModulePageNode(name, content, null, children, emptyList()),
     JavadocPageNode {
-
-    override val documentable: Documentable? = null
-    override val embeddedResources: List<String> = emptyList()
-    override fun modified(name: String, children: List<PageNode>): ModulePageNode =
-        JavadocModulePageNode(name, content, children, dri)
 
     override fun modified(
         name: String,
@@ -43,29 +37,17 @@ class JavadocModulePageNode(
         dri: Set<DRI>,
         embeddedResources: List<String>,
         children: List<PageNode>
-    ): ModulePageNode = JavadocModulePageNode(name, content as JavadocContentNode, children, dri)
+    ): ModulePageNode = JavadocModulePageNode(name, content as JavadocContentNode, children)
 }
 
 class JavadocPackagePageNode(
-    override val name: String,
-    override val content: JavadocContentNode,
-    override val dri: Set<DRI>,
-    override val documentable: Documentable? = null,
-    override val children: List<PageNode> = emptyList(),
-    override val embeddedResources: List<String> = listOf()
+    name: String,
+    content: JavadocContentNode,
+    dri: Set<DRI>,
+    documentable: Documentable? = null,
+    children: List<PageNode> = emptyList(),
+    embeddedResources: List<String> = listOf()
 ) : JavadocPageNode, PackagePageNode(name, content, dri, documentable, children, embeddedResources) {
-
-    override fun modified(
-        name: String,
-        children: List<PageNode>
-    ): PackagePageNode = JavadocPackagePageNode(
-        name,
-        content,
-        dri,
-        documentable,
-        children,
-        embeddedResources
-    )
 
     override fun modified(
         name: String,
@@ -129,9 +111,9 @@ data class JavadocFunctionNode(
 }
 
 class JavadocClasslikePageNode(
-    override val name: String,
-    override val content: JavadocContentNode,
-    override val dri: Set<DRI>,
+    name: String,
+    content: JavadocContentNode,
+    dri: Set<DRI>,
     val signature: JavadocSignatureContentNode,
     val description: List<ContentNode>,
     val constructors: List<JavadocFunctionNode>,
@@ -139,34 +121,14 @@ class JavadocClasslikePageNode(
     val entries: List<JavadocEntryNode>,
     val classlikes: List<JavadocClasslikePageNode>,
     val properties: List<JavadocPropertyNode>,
-    override val documentable: Documentable? = null,
-    override val children: List<PageNode> = emptyList(),
-    override val embeddedResources: List<String> = listOf(),
+    documentable: Documentable? = null,
+    children: List<PageNode> = emptyList(),
+    embeddedResources: List<String> = listOf(),
     override val extra: PropertyContainer<DClasslike> = PropertyContainer.empty(),
-) : JavadocPageNode, WithJavadocExtra<DClasslike> {
+) : JavadocPageNode, WithJavadocExtra<DClasslike>, ClasslikePageNode(name, content, dri, documentable, children, embeddedResources) {
 
     val kind: String? = documentable?.kind()
     val packageName = dri.first().packageName
-
-    override fun modified(
-        name: String,
-        children: List<PageNode>
-    ): PageNode = JavadocClasslikePageNode(
-        name,
-        content,
-        dri,
-        signature,
-        description,
-        constructors,
-        methods,
-        entries,
-        classlikes,
-        properties,
-        documentable,
-        children,
-        embeddedResources,
-        extra
-    )
 
     override fun modified(
         name: String,
@@ -174,7 +136,7 @@ class JavadocClasslikePageNode(
         dri: Set<DRI>,
         embeddedResources: List<String>,
         children: List<PageNode>
-    ): ContentPage =
+    ): ClasslikePageNode =
         JavadocClasslikePageNode(
             name,
             content as JavadocContentNode,

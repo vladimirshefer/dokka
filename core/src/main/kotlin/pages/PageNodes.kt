@@ -61,11 +61,11 @@ abstract class RootPageNode: PageNode {
 }
 
 open class ModulePageNode(
-    override val name: String,
-    override val content: ContentNode,
-    override val documentable: Documentable?,
-    override val children: List<PageNode>,
-    override val embeddedResources: List<String> = listOf()
+    final override val name: String,
+    final override val content: ContentNode,
+    final override val documentable: Documentable?,
+    final override val children: List<PageNode>,
+    final override val embeddedResources: List<String> = listOf()
 ) : RootPageNode(), ContentPage {
     override val dri: Set<DRI> = setOf(DRI.topLevel)
 
@@ -84,12 +84,12 @@ open class ModulePageNode(
 }
 
 open class PackagePageNode(
-    override val name: String,
-    override val content: ContentNode,
-    override val dri: Set<DRI>,
-    override val documentable: Documentable?,
-    override val children: List<PageNode>,
-    override val embeddedResources: List<String> = listOf()
+    final override val name: String,
+    final override val content: ContentNode,
+    final override val dri: Set<DRI>,
+    final override val documentable: Documentable?,
+    final override val children: List<PageNode>,
+    final override val embeddedResources: List<String> = listOf()
 ) : ContentPage {
     override fun modified(name: String, children: List<PageNode>): PackagePageNode =
         modified(name = name, content = this.content, children = children)
@@ -106,12 +106,12 @@ open class PackagePageNode(
 }
 
 open class ClasslikePageNode(
-    override val name: String,
-    override val content: ContentNode,
-    override val dri: Set<DRI>,
-    override val documentable: Documentable?,
-    override val children: List<PageNode>,
-    override val embeddedResources: List<String> = listOf()
+    final override val name: String,
+    final override val content: ContentNode,
+    final override val dri: Set<DRI>,
+    final override val documentable: Documentable?,
+    final override val children: List<PageNode>,
+    final override val embeddedResources: List<String> = listOf()
 ) : ContentPage {
     override fun modified(name: String, children: List<PageNode>): ClasslikePageNode =
         modified(name = name, content = this.content, children = children)
@@ -128,12 +128,12 @@ open class ClasslikePageNode(
 }
 
 open class MemberPageNode(
-    override val name: String,
-    override val content: ContentNode,
-    override val dri: Set<DRI>,
-    override val documentable: Documentable?,
-    override val children: List<PageNode> = emptyList(),
-    override val embeddedResources: List<String> = listOf()
+    final override val name: String,
+    final override val content: ContentNode,
+    final override val dri: Set<DRI>,
+    final override val documentable: Documentable?,
+    final override val children: List<PageNode> = emptyList(),
+    final override val embeddedResources: List<String> = listOf()
 ) : ContentPage {
     override fun modified(name: String, children: List<PageNode>): MemberPageNode =
         modified(name = name, content = this.content, children = children) as MemberPageNode
