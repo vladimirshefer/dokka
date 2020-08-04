@@ -1054,3 +1054,7 @@ td.content {
 div.runnablesample {
     height: fit-content;
 }
+
+.anchor-highlight {
+    color: red !important;
+}

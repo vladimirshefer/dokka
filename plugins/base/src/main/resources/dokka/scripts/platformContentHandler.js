@@ -37,6 +37,9 @@ function handleAnchor() {
             if (tab) {
                 let found = document.querySelector('.tabs-section > .section-tab[data-togglable="' + tab.getAttribute("data-togglable") + '"]')
                 toggleSections(tab)
+                for(const e of element.nextElementSibling.getElementsByClassName('anchor-wrapper')){
+                    if(e.previousElementSibling) e.previousElementSibling.classList.add('anchor-highlight')
+                }
                 element.scrollIntoView({behavior: "smooth"})
             }
         }
