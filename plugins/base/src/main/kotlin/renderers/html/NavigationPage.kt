@@ -45,7 +45,8 @@ data class NavigationNode(
     val name: String,
     @get:JsonSerialize(using = ToStringSerializer::class) val dri: DRI,
     @get:JsonIgnore val sourceSets: Set<DokkaSourceSet>,
-    val children: List<NavigationNode>
+    val children: List<NavigationNode>,
+    val url: String? = null
 )
 
 fun NavigationPage.transform(block: (NavigationNode) -> NavigationNode) = NavigationPage(root.transform(block))

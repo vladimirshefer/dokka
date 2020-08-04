@@ -11,6 +11,9 @@ import org.jetbrains.dokka.pages.*
 import org.jetbrains.dokka.plugability.DokkaContext
 import org.jetbrains.dokka.transformers.pages.PageTransformer
 import com.fasterxml.jackson.module.kotlin.*
+import org.jetbrains.dokka.base.DokkaBase
+import org.jetbrains.dokka.plugability.plugin
+import org.jetbrains.dokka.plugability.querySingle
 
 
 object SearchPageInstaller : PageTransformer {
@@ -54,10 +57,10 @@ object NavigationPageInstaller : PageTransformer {
 
     private fun visit(page: ContentPage): NavigationNode =
         NavigationNode(
-            page.name,
-            page.dri.first(),
-            page.sourceSets(),
-            page.navigableChildren()
+            name = page.name,
+            dri = page.dri.first(),
+            sourceSets = page.sourceSets(),
+            children = page.navigableChildren()
         )
 
     private fun ContentPage.navigableChildren(): List<NavigationNode> =
@@ -87,7 +90,7 @@ object StyleAndScriptsAppender : PageTransformer {
                 "scripts/platformContentHandler.js",
                 "scripts/sourceset_dependencies.js",
                 "scripts/clipboard.js",
-                "scripts/navigationPane.js",
+//                "scripts/navigationPane.js",
                 "styles/jetbrains-mono.css"
             )
         )

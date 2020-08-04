@@ -1,0 +1,26 @@
+@import "src/main/scss/index.scss";
+
+$defaultHeight: 40px;
+
+div#paneSearch {
+    width: 90%;
+    margin: 0 auto;
+
+    input#navigation-pane-search {
+        background: $white;
+        border: 1px solid $grey-border;
+        box-sizing: border-box;
+        border-radius: 4px;
+        padding: 0.5em 1em;
+        height: $defaultHeight;
+    }
+    
+    .navigation-pane-search {
+        width: 100% !important;
+        padding-top: 16px;
+    }
+}
+
+.navigation-pane-popup {
+    margin-top: 1.2em;
+}
