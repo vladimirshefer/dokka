@@ -24,7 +24,6 @@ internal fun Task.GradleDokkaSourceSetBuilderFactory(): (name: String) -> Gradle
     { name -> GradleDokkaSourceSetBuilder(name, project) }
 
 
-// TODO NOW: Cover with tests
 open class GradleDokkaSourceSetBuilder constructor(
     @Transient @get:Input val name: String,
     @Transient @get:Internal internal val project: Project

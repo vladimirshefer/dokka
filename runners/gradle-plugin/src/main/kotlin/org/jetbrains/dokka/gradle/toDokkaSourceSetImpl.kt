@@ -4,7 +4,6 @@ import org.jetbrains.dokka.*
 import org.jetbrains.dokka.DokkaConfiguration.ExternalDocumentationLink
 import java.io.File
 
-// TODO NOW: Test
 internal fun GradleDokkaSourceSetBuilder.toDokkaSourceSetImpl(): DokkaSourceSetImpl {
     return DokkaSourceSetImpl(
         classpath = classpath.toSet(),
